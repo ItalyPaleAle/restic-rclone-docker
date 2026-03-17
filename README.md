@@ -22,7 +22,11 @@ Published on GitHub Container Registry:
 
 ## Automation
 
-The GitHub Actions workflow runs daily and on manual dispatch.
+The GitHub Actions workflow runs:
+
+- daily
+- on manual dispatch
+- on pushes to `main`
 
 It rebuilds/publishes only when needed:
 
