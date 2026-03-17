@@ -12,13 +12,11 @@ Published on GitHub Container Registry:
 
 ## Build details
 
-- Final image base: `alpine:latest`
-- `restic` binary copied from `ghcr.io/restic/restic`
-- `rclone` binary copied from `ghcr.io/rclone/rclone`
-- `openssh-client` is included
+- Based on alpine
+- `restic` binary copied from official container image `ghcr.io/restic/restic`
+- `rclone` binary copied from official container image `ghcr.io/rclone/rclone`
+- Includes `openssh-client`
 - Built as multi-arch image for `linux/amd64` and `linux/arm64`
-- No explicit `USER` is configured in the image
-- Entrypoint is `restic`
 
 ## Automation
 
@@ -29,5 +27,3 @@ It rebuilds/publishes only when needed:
 1. New `restic` release
 2. New `rclone` release
 3. `alpine:latest` digest changed compared to the last published combo tag
-
-Before pushing, CI builds a local `linux/amd64` image and verifies it can initialize a repository and create a backup from a mounted source directory.
