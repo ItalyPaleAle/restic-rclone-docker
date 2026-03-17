@@ -42,7 +42,8 @@ jobs:
         id: alpine
         run: |
           set -euo pipefail
-          alpine_digest="$(docker buildx imagetools inspect alpine:latest --format '{{.Manifest.Digest}}')"
+          alpine_digest="$(docker buildx imagetools inspect alpine:latest | awk '$1 == "Digest:" { print $2; exit }')"
+          echo "$alpine_digest" | grep -Eq '^sha256:[0-9a-f]{64}$'
           echo "alpine_digest=${alpine_digest}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
