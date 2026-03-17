@@ -2,6 +2,9 @@ name: Build and publish image
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
   schedule:
     - cron: '17 2 * * *'
 
@@ -39,7 +42,7 @@ jobs:
         id: alpine
         run: |
           set -euo pipefail
-          alpine_digest="$(docker buildx imagetools inspect alpine:latest --format '{{.Digest}}')"
+          alpine_digest="$(docker buildx imagetools inspect alpine:latest --format '{{.Manifest.Digest}}')"
           echo "alpine_digest=${alpine_digest}" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
