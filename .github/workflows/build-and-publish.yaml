@@ -30,9 +30,9 @@ jobs:
         id: versions
         run: |
           set -euo pipefail
-          restic_version="$(curl -fsSL https://api.github.com/repos/restic/restic/releases/latest | jq -r '.tag_name | ltrimstr("v")')"
-          rclone_version="$(curl -fsSL https://api.github.com/repos/rclone/rclone/releases/latest | jq -r '.tag_name | ltrimstr("v")')"
-          combo_tag="${restic_version}:${rclone_version}"
+          restic_version="$(curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors https://api.github.com/repos/restic/restic/releases/latest | jq -r '.tag_name | ltrimstr("v")')"
+          rclone_version="$(curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors https://api.github.com/repos/rclone/rclone/releases/latest | jq -r '.tag_name | ltrimstr("v")')"
+          combo_tag="${restic_version}-${rclone_version}"
 
           echo "restic_version=${restic_version}" >> "$GITHUB_OUTPUT"
           echo "rclone_version=${rclone_version}" >> "$GITHUB_OUTPUT"
