@@ -42,7 +42,7 @@ jobs:
         id: alpine
         run: |
           set -euo pipefail
-          alpine_digest="$(docker buildx imagetools inspect alpine:latest | awk '$1 == "Digest:" && $2 ~ /^sha256:[0-9a-f]{64}$/ { print $2; exit }')"
+          alpine_digest="$(docker buildx imagetools inspect --raw alpine:latest | jq -r '.manifests[0].annotations["org.opencontainers.image.revision"]')"
           test -n "$alpine_digest"
           echo "alpine_digest=${alpine_digest}" >> "$GITHUB_OUTPUT"
 
