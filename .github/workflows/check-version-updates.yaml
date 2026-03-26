@@ -1,0 +1,80 @@
+name: Check dependency version updates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 */2 * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-updates:
+    name: Check for new alpine/restic/rclone versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Resolve latest upstream versions
+        id: latest
+        run: |
+          set -euo pipefail
+          restic_version="$(curl -fsSL --retry 10 --retry-all-errors https://api.github.com/repos/restic/restic/releases/latest | jq -r '.tag_name | ltrimstr("v")')"
+          rclone_version="$(curl -fsSL --retry 10 --retry-all-errors https://api.github.com/repos/rclone/rclone/releases/latest | jq -r '.tag_name | ltrimstr("v")')"
+          alpine_digest="$(docker buildx imagetools inspect --raw alpine:latest | jq -r '.manifests[0].annotations["org.opencontainers.image.revision"]')"
+          test -n "$alpine_digest"
+
+          echo "restic_version=${restic_version}" >> "$GITHUB_OUTPUT"
+          echo "rclone_version=${rclone_version}" >> "$GITHUB_OUTPUT"
+          echo "alpine_digest=${alpine_digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Update versions.json if needed
+        id: update
+        env:
+          RESTIC_VERSION: ${{ steps.latest.outputs.restic_version }}
+          RCLONE_VERSION: ${{ steps.latest.outputs.rclone_version }}
+          ALPINE_DIGEST: ${{ steps.latest.outputs.alpine_digest }}
+        run: |
+          set -euo pipefail
+
+          current_restic="$(jq -r '.restic' versions.json)"
+          current_rclone="$(jq -r '.rclone' versions.json)"
+          current_alpine="$(jq -r '.alpine' versions.json)"
+
+          if [ "$current_restic" = "$RESTIC_VERSION" ] && \
+             [ "$current_rclone" = "$RCLONE_VERSION" ] && \
+             [ "$current_alpine" = "$ALPINE_DIGEST" ]; then
+            echo "No updates detected"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          jq \
+            --arg restic "$RESTIC_VERSION" \
+            --arg rclone "$RCLONE_VERSION" \
+            --arg alpine "$ALPINE_DIGEST" \
+            '.restic = $restic | .rclone = $rclone | .alpine = $alpine' \
+            versions.json > versions.json.tmp
+          mv versions.json.tmp versions.json
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore: update versions.json'
+          title: 'chore: update versions.json'
+          body: |
+            Automated update of `versions.json`.
+
+            - restic: `${{ steps.latest.outputs.restic_version }}`
+            - rclone: `${{ steps.latest.outputs.rclone_version }}`
+            - alpine digest: `${{ steps.latest.outputs.alpine_digest }}`
+          branch: chore/update-versions-json
+          delete-branch: true
