@@ -63,18 +63,23 @@ jobs:
           mv versions.json.tmp versions.json
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "hash=$(sha256sum versions.json | head -c 8)" >> "$GITHUB_OUTPUT"
 
       - name: Create pull request
         if: steps.update.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: 'chore: update versions.json'
-          title: 'chore: update versions.json'
+          commit-message: 'Update versions.json'
+          title: 'Update versions.json'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          author: '${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>'
           body: |
-            Automated update of `versions.json`.
+            Update `versions.json`:
 
             - restic: `${{ steps.latest.outputs.restic_version }}`
             - rclone: `${{ steps.latest.outputs.rclone_version }}`
             - alpine digest: `${{ steps.latest.outputs.alpine_digest }}`
-          branch: chore/update-versions-json
-          delete-branch: true
+          branch: 'update-versions/${{ steps.update.outputs.hash }}'
+          sign-commits: true
+          labels: |
+            automated pr
