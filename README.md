@@ -20,10 +20,8 @@ Published on GitHub Container Registry:
 
 ## Automation
 
-The GitHub Actions workflow runs daily and on manual dispatch.
+The repository keeps version metadata in `versions.json`.
 
-It rebuilds/publishes only when needed:
-
-1. New `restic` release
-2. New `rclone` release
-3. `alpine:latest` digest changed compared to the last published combo tag
+- `check-version-updates` runs every 2 days (and on manual dispatch) to detect new `restic`, `rclone`, or `alpine:latest` digest values.
+- If there is a change, the workflow opens a pull request updating `versions.json`.
+- `build-and-publish` runs only on commits to `main` (or manual dispatch), reads versions from `versions.json`, then builds/tests/publishes images.
