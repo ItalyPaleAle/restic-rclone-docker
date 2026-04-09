@@ -1,5 +1,5 @@
 {
   "alpine": "a037d70ba44f91b00dff940019d29a28f7ba1265",
   "restic": "0.18.1",
-  "rclone": "1.73.3"
+  "rclone": "1.73.4"
 }
